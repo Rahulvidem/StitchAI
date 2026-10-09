@@ -1,0 +1,35 @@
+services:
+  backend:
+    build:
+      context: ./backend
+    environment:
+      PORT: 8080
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in the root .env file}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-2.5-flash}
+      CORS_ALLOWED_ORIGIN: ${CORS_ALLOWED_ORIGIN:-http://localhost:3000,http://127.0.0.1:3000}
+      DATABASE_URL: jdbc:h2:file:/data/stitchai;DB_CLOSE_ON_EXIT=FALSE
+      DATABASE_USERNAME: sa
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD:-}
+    volumes:
+      - stitchai-data:/data
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "-", "http://localhost:8080/api/health"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "3000:80"
+    restart: unless-stopped
+
+volumes:
+  stitchai-data:

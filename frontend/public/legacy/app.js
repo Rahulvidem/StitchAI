@@ -330,18 +330,26 @@ const state = {
   }
 };
 
-const API_BASE_URL = (() => {
-  const pageUrl = new URL(window.location.href);
-  const isLocalHost = ['localhost', '127.0.0.1', '[::1]'].includes(pageUrl.hostname);
-  if (pageUrl.protocol === 'file:' || (isLocalHost && pageUrl.port !== '8000')) {
-    const apiHost = pageUrl.hostname || '127.0.0.1';
-    return `${pageUrl.protocol === 'https:' ? 'https:' : 'http:'}//${apiHost}:8000`;
+const API_BASE_URL = '';
+
+function getSessionToken() {
+  try {
+    return JSON.parse(localStorage.getItem('stitchai-session') || 'null')?.token || '';
+  } catch (error) {
+    console.error('Could not read the StitchAI session:', error);
+    return '';
   }
-  return '';
-})();
+}
 
 async function apiRequest(path, options = {}) {
-  const response = await fetch(`${API_BASE_URL}${path}`, options);
+  const token = getSessionToken();
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    ...options,
+    headers: {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(options.headers || {})
+    }
+  });
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
     throw new Error(data.error || `Request failed (${response.status})`);
@@ -769,7 +777,10 @@ function dispatchAIReceptionistResponse(userText) {
   // Try calling backend /api/gemini/chat
   fetch('/api/gemini/chat', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      ...(getSessionToken() ? { Authorization: `Bearer ${getSessionToken()}` } : {})
+    },
     body: JSON.stringify({
       message: userText,
       apiKey: state.gemini.apiKey,
