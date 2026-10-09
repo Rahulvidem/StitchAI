@@ -35,7 +35,7 @@ public class ApiController {
     @GetMapping("/health")
     public Map<String, Object> health() {
         return Map.of("status", "healthy", "platform", "StitchAI", "version", "4.0.0",
-                "database", "H2", "modules", List.of("Orders", "Quotations", "Embroidery Studio", "AI RAG Assistant"));
+                "database", "SQL", "modules", List.of("Orders", "Quotations", "Embroidery Studio", "AI RAG Assistant"));
     }
 
     @GetMapping("/dashboard")

@@ -61,10 +61,9 @@ knowledge base. `GEMINI_MODEL` and `PORT` can also be configured with environmen
 variables.
 
 The H2 database is persisted to `backend/data/` by default. Seed orders and leads
-are created on first startup; user-created records persist across restarts.
-Override the connection using `DATABASE_URL`, `DATABASE_USERNAME`, and
-`DATABASE_PASSWORD` when deploying with another SQL database, and add that
-database's JDBC driver to `backend/pom.xml`.
+are created on first startup; user-created records persist across restarts. For
+deployment with PostgreSQL, set `DATABASE_URL`, `DATABASE_USERNAME`, and
+`DATABASE_PASSWORD`; the PostgreSQL JDBC driver is included.
 
 ## Included workflows
 
@@ -123,52 +122,49 @@ application and proxies `/api` to Spring Boot. The H2 database is stored in the
 Docker `stitchai-data` volume. Back up that volume when preserving production
 data; changing or losing the JWT secret invalidates all active sessions.
 
-## Deploy with GitHub and Netlify
+## Deploy with GitHub, Render, Neon, and Netlify
 
-Netlify deploys the **React frontend**. It does not run this Spring Boot
-application as a normal Netlify site, so first deploy the `backend/` service to
-a Java/Docker host that provides persistent storage. The steps below use Railway
-for the API and Netlify for the frontend.
+Netlify serves the React frontend. Render runs the Spring Boot API from the
+included `render.yaml`; Neon provides PostgreSQL so account and workflow data
+survive free web-service sleeps and redeployments.
 
-1. Push this project to your GitHub repository. Do not commit `.env`, API keys,
-   database files, `frontend/node_modules/`, `frontend/dist/`, or
-   `backend/target/`.
-2. In Railway, create a project and deploy the GitHub repository as a service.
-   Set the service's **Root Directory** to `/backend`; Railway will build its
-   `Dockerfile`. Generate a public domain and add a Railway volume mounted at
-   `/var/data`.
-3. Add these variables to the Railway service:
+These providers offer free plans, but their limits apply: Render free services
+can sleep and take time to wake; Neon Free has usage/storage limits and scales
+to zero. This setup is intended for a demo or small project, not production
+availability. Do not enable paid upgrades unless you have reviewed and approved
+the current pricing.
 
-   ```text
-   JWT_SECRET=<a newly generated private base64 secret of at least 32 bytes>
-   DATABASE_URL=jdbc:h2:file:/var/data/stitchai;DB_CLOSE_ON_EXIT=FALSE
-   DATABASE_USERNAME=sa
-   DATABASE_PASSWORD=
-   JWT_EXPIRATION_HOURS=12
-   ```
-
-   Optionally set `GEMINI_API_KEY` and `GEMINI_MODEL`. Railway supplies `PORT`.
-   Configure its health check path as `/api/health`. Wait until the service is
-   healthy and copy its public URL.
-4. In Netlify, import the same GitHub repository. The included `netlify.toml`
-   configures the frontend build and publish directory, including the
-   single-page-app route fallback. Copy the Netlify site origin, for example
-   `https://your-site.netlify.app`.
-5. In Railway, set `CORS_ALLOWED_ORIGIN` to the exact Netlify site origin. Add
-   production custom-domain origins as comma-separated values, then redeploy
-   the backend.
-6. In Netlify's environment variables, set `VITE_API_URL` to the Railway public
-   API URL, for example `https://your-api.up.railway.app` (without a trailing
-   `/api`). Trigger a new Netlify deploy after setting it.
-7. Open the Netlify URL, register an account, and check the dashboard. If the
-   frontend or API URL changes, update the corresponding environment variable
-   and redeploy the affected service.
+1. Push this project to GitHub. Do not commit `.env`, API keys, database files,
+   `frontend/node_modules/`, `frontend/dist/`, or `backend/target/`.
+2. Create a Neon Free project and copy the PostgreSQL connection details. Use
+   the pooled connection host and require SSL. The JDBC URL format is
+   `jdbc:postgresql://<host>/<database>?sslmode=require`; copy the database
+   username and password separately. Neon Free is $0/month, with limited
+   compute and storage.
+3. In Render, choose **New > Blueprint** and connect this repository. Render
+   reads `render.yaml` and creates the API as a **Free** Docker web service.
+   Supply the Neon database values when prompted. The blueprint automatically
+   generates a private base64-encoded `JWT_SECRET`. The blueprint restricts the
+   service to the free compute plan and checks `/api/health`.
+4. Wait for the service to deploy. Open `<Render service URL>/api/health`; it
+   should return JSON with `"status":"healthy"`. Copy the service origin, for
+   example `https://stitchai-api.onrender.com`.
+5. In Netlify, open **Site configuration > Environment variables** and add
+   `VITE_API_URL` with the Render service origin only (no trailing slash and no
+   `/api`). Trigger a production redeploy so Vite includes this build-time
+   value.
+6. In Render, set `CORS_ALLOWED_ORIGIN` to the exact Netlify site origin:
+   `https://stitchai-videmrahul.netlify.app`. Redeploy the API after changing
+   it.
+7. Open the Netlify URL on another device, register an account, and verify the
+   dashboard. The Render service may need up to a minute to wake after
+   inactivity. Neon data remains in the database when Render sleeps.
 
 If `VITE_API_URL` is missing from a production build, the app shows a setup
 error rather than sending requests to a nonexistent Netlify API path. Do not
-put `JWT_SECRET` or `GEMINI_API_KEY` in Netlify frontend environment variables:
-values bundled into the browser are public. Store those secrets only in the
-backend host's secret environment settings.
+put `JWT_SECRET`, database credentials, or `GEMINI_API_KEY` in Netlify frontend
+environment variables: values bundled into the browser are public. Store
+secrets only in the backend/database provider settings.
 
 ## Security and production notes
 

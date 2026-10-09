@@ -47,7 +47,7 @@ CREATE TABLE IF NOT EXISTS quotes (
     total_amount DECIMAL(12,2) NOT NULL,
     lead_time VARCHAR(60) NOT NULL,
     valid_until DATE NOT NULL,
-    line_items_json CLOB,
+    line_items_json TEXT,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -59,7 +59,7 @@ CREATE TABLE IF NOT EXISTS artworks (
     complexity_score INTEGER NOT NULL,
     stitch_count INTEGER NOT NULL,
     colors_count INTEGER NOT NULL,
-    colors_json CLOB,
+    colors_json TEXT,
     puff_eligibility VARCHAR(180),
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
@@ -72,7 +72,7 @@ CREATE TABLE IF NOT EXISTS transactions (
     payment_gateway VARCHAR(30) NOT NULL,
     status VARCHAR(30) NOT NULL,
     receipt_no VARCHAR(40),
-    payment_details_json CLOB,
+    payment_details_json TEXT,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
