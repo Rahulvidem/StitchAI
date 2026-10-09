@@ -154,7 +154,7 @@ the current pricing.
    `/api`). Trigger a production redeploy so Vite includes this build-time
    value.
 6. In Render, set `CORS_ALLOWED_ORIGIN` to the exact Netlify site origin:
-   `https://stitchai-videmrahul.netlify.app`. Redeploy the API after changing
+   `https://videm-24eg107f58.netlify.app`. Redeploy the API after changing
    it.
 7. Open the Netlify URL on another device, register an account, and verify the
    dashboard. The Render service may need up to a minute to wake after

@@ -17,4 +17,4 @@ services:
       - key: DATABASE_PASSWORD
         sync: false
       - key: CORS_ALLOWED_ORIGIN
-        value: https://stitchai-videmrahul.netlify.app
+        value: https://videm-24eg107f58.netlify.app
