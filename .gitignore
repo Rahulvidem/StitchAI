@@ -1,0 +1,13 @@
+__pycache__/
+*.py[cod]
+
+# Local database and environment configuration
+backend/*.db
+.env
+.env.*
+!.env.example
+
+# Local development files
+.DS_Store
+.venv/
+venv/
